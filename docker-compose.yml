@@ -1,0 +1,62 @@
+---
+version: "3.9"
+x-default: &default
+  image: rabbitmq:3.10.5-management
+  volumes:
+    - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    - ./enabled_plugins:/etc/rabbitmq/enabled_plugins
+    - ./rabbitmq-definitions-basic.json:/etc/rabbitmq/rabbitmq-definitions.json
+    - ./erl_inetrc:/etc/rabbitmq/erl_inetrc
+    - ./erlang.cookie:/var/lib/rabbitmq/.erlang.cookie
+  environment:
+    RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -kernel inetrc '/etc/rabbitmq/erl_inetrc' -proto_dist inet6_tcp
+    RABBITMQ_CTL_ERL_ARGS: -proto_dist inet6_tcp
+    RABBITMQ_FEATURE_FLAGS: quorum_queue,maintenance_mode_status,stream_queue
+  healthcheck:
+      test: rabbitmq-diagnostics -q status && rabbitmq-diagnostics -q check_local_alarms
+      interval: 10s
+      timeout: 60s
+      retries: 6
+
+services:
+  rabbitmq-0:
+    <<: *default
+    hostname: rabbitmq-0
+    volumes:
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./enabled_plugins:/etc/rabbitmq/enabled_plugins
+      - ./rabbitmq-definitions.json:/etc/rabbitmq/rabbitmq-definitions.json
+      - ./erl_inetrc:/etc/rabbitmq/erl_inetrc
+      - ./erlang.cookie:/var/lib/rabbitmq/.erlang.cookie
+    ports:
+      - '15672:15672'
+    networks:
+      app_net:
+        ipv6_address: 2001:3200:3200::20
+  rabbitmq-1:
+    <<: *default
+    hostname: rabbitmq-1
+    networks:
+      app_net:
+        ipv6_address: 2001:3200:3200::21
+    depends_on:
+      rabbitmq-0:
+        condition: service_started
+  rabbitmq-2:
+    <<: *default
+    hostname: rabbitmq-2
+    networks:
+      app_net:
+        ipv6_address: 2001:3200:3200::22
+    depends_on:
+      rabbitmq-1:
+        condition: service_started
+networks:
+  app_net:
+    enable_ipv6: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 2001:3200:3200::/64
+          gateway: 2001:3200:3200::1

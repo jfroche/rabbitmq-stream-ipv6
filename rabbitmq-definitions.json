@@ -1,0 +1,36 @@
+{
+	"users": [
+		{
+			"name": "guest",
+			"password_hash": "+EeUEEI/0NQvMwPrp/cqpZ9nBE1V04Z0l4Z62Stxis6tmnBr",
+			"hashing_algorithm": "rabbit_password_hashing_sha256",
+			"tags": "administrator",
+			"limits": {}
+		}
+	],
+	"permissions": [
+		{
+			"configure": ".*",
+			"read": ".*",
+			"user": "guest",
+			"vhost": "/",
+			"write": ".*"
+		}
+	],
+	"queues": [
+		{
+			"name": "MyStream",
+			"vhost": "/",
+			"durable": true,
+			"auto_delete": false,
+			"arguments": {
+				"x-queue-type": "stream"
+			}
+		}
+	],
+	"vhosts": [
+		{
+			"name": "/"
+		}
+	]
+}
